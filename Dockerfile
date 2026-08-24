@@ -19,6 +19,7 @@ WORKDIR /build
 
 RUN git clone https://github.com/hoytech/strfry.git && \
     cd strfry && \
+    git checkout 1.1.1 && \
     git submodule update --init && \
     make setup-golpe && \
     make -j2
