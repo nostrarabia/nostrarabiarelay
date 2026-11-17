@@ -21,7 +21,7 @@ services:
       start_period: 40s
 
   blossom-server:
-    image: ghcr.io/hzrd149/blossom-server:6.2.0
+    image: ghcr.io/hzrd149/blossom-server:6.4.1@sha256:446fa6c4b0ca529a1fbceabf5ea75839b5b76dfb0d0e1d150f3bae5f9a52b3b8
     container_name: blossom-server
     expose:
       - "3000"
@@ -34,11 +34,14 @@ services:
       # Set admin password via environment variable
       # You can set this in your deployment secrets
       - BLOSSOM_ADMIN_PASSWORD=${BLOSSOM_ADMIN_PASSWORD:-}
+      # Refuse to start on schema defaults if the mounted config is missing
+      - BLOSSOM_REQUIRE_CONFIG=1
     restart: unless-stopped
     networks:
       - nostr-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      # The blossom image has no curl or wget; probe with Deno (upstream 6.4.2 fix).
+      test: ["CMD", "deno", "eval", "--no-config", "const r = await fetch('http://127.0.0.1:3000/'); Deno.exit(r.status < 500 ? 0 : 1);"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -82,7 +85,9 @@ services:
     networks:
       - nostr-network
     environment:
-      - CADDY_ADMIN=0.0.0.0:2019  # Admin API endpoint
+      # Admin API on loopback only: on 0.0.0.0 any container on this network
+      # (e.g. via a blossom SSRF) could rewrite the proxy config.
+      - CADDY_ADMIN=localhost:2019
 
 volumes:
   strfry-data:

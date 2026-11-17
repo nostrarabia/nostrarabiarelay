@@ -238,6 +238,9 @@ upload:
   enabled: true
   requireAuth: true
   requirePubkeyInRule: true
+  # 100 MB, matching Caddy's request_body cap. Also bounds /mirror, whose
+  # remote fetch never passes through Caddy (server default is 2 GB).
+  maxSize: 104857600
 
 # ---------------------------------------------------------------------------
 # Mirror (BUD-04)
