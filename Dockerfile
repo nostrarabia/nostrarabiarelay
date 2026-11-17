@@ -29,8 +29,13 @@ FROM rust:1.75-bookworm AS noteguard-builder
 
 WORKDIR /build
 
+# Pinned: building upstream HEAD broke once noteguard moved to a v4 Cargo.lock
+# that rust:1.75 cannot read. 4d4d9d6 is the commit the running image was
+# built from (Aug 24 deploy); pinning also stops unreviewed upstream changes
+# from shipping on our deploys.
 RUN git clone https://github.com/damus-io/noteguard.git && \
     cd noteguard && \
+    git checkout 4d4d9d62d020d472f6435c877de144c824916cad && \
     cargo build --release
 
 # Stage 3: Runtime image
